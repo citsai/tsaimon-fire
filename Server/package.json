@@ -1,0 +1,18 @@
+{
+  "name": "tsaimon-fire",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./app.js"
+  },
+  "dependencies": {
+    "firebase": "^2.2.4",
+    "gea-adapter-usb": "git+https://github.com/GEMakers/gea-adapter-usb.git",
+    "gea-sdk": "git+https://github.com/GEMakers/gea-sdk.git",
+    "gowiththeflow": "*",
+    "moment": "*",
+    "nodemailer": "*",
+    "nodemailer-smtp-transport": "*",
+    "nodemailer-wellknown": "*"
+  }
+}
