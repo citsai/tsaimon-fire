@@ -52,6 +52,6 @@ Client:
 
 Miscellaneous:
 --------------
-  * Some slower computers such as Rasberry Pi may crash due to the GEA-Adapter-USB timing out.  One can reduce the incidence by modifying the constant **DISCOVERY_INTERVAL** from 1000 to something higher like 7000 in "appliance.js" under the gea-sdk/src/ directory.
+  * Some slower computers such as Rasberry Pi may crash due to the GEA-Adapter-USB timing out.  One can reduce the incidence by modifying the constant **DISCOVERY_INTERVAL** from 1000 to something higher like 7000 in "appliance.js" under the node_modules/gea-sdk/src/ directory.
   * Make sure you modify the mailer data info in Firebase in order to send the email alerts.  For more information, see the nodemailer (https://github.com/andris9/Nodemailer).
   * There is a slow memory leak that is not resolved.  Highly suggest that you use a production monitoring software such as PM2 to automatically restart when there is an error or memory usage exceed a certain threshold.
