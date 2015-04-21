@@ -1,6 +1,6 @@
 # tsaimon-fire
 ==============
-Monitor the GE GeoSpring Hybrid Electric Water Heater.
+GE GeoSpring Hybrid Electric Water Heater (Firebase Edition)
 -----------------------------------------------------
   - Remote Control (change Mode and Setpoint)
   - Scheduler
