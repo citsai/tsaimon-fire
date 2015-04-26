@@ -108,6 +108,15 @@ geapp.bind(adapter, function (bus) {
 		setInterval(function(){
 //**** alternate method using sequential blocking *******
 			Flow = require('gowiththeflow');
+
+			// check memory usage for leakages and exit if over.... uncomment this if you are going to use a production manager
+			usage = process.memoryUsage();
+			if (usage.rss > 120000000) {
+				console.log(usage);
+				process.abort();
+			}
+
+			// get the hyperterminal data
 			Flow().par(function(next){
 				//get hyperterminal data from appliance
 				appliance.send(0x56,[],function(data1) {
@@ -139,6 +148,7 @@ geapp.bind(adapter, function (bus) {
 					Mode = res[1][8];
 					if (model < 4) {
 						Mode = Mode - 1;  // Off set for G2 models.
+						FAN = COMP;	// no independent FAN relay for G2 models.
 					}
 					console.log(timeStamp,UE,LE,COMP,FAN,SP,T2,T3a,T3b,T4,T5,Amp,Volt,EEV,Flow,Mode,dehum);
 
@@ -156,68 +166,70 @@ geapp.bind(adapter, function (bus) {
 					}
 					alertChk(SP,Mode,UE,LE,appliance);
 					// Check to see if need to change SP/Modes
-						// Check firebase Schedule
-						fireSchedule.orderByChild('Time').endAt(timeStamp).limitToFirst(1).once('child_added', function(snap) {
-							console.log(snap.val());
-							if (snap.val() != "") {
-								if (snap.val().SP != SP || snap.val().Mode != Mode || snap.val().Dehum != dehum) {
-									console.log(snap.val().SP, SP, snap.val().Mode, Mode);
-									// Change Mode
-									if ([snap.val().Mode] == 4) {
-										console.log('went to vacation mode');
-										appliance.send(0xDF, [0x14,snap.val().Mode,99,50]);
+					// Check firebase Schedule
+					fireSchedule.orderByChild('Time').endAt(timeStamp).limitToFirst(1).once('child_added', function(snap) {
+						console.log(snap.val());
+						if (snap.val() != "") {
+							if (snap.val().SP != SP || snap.val().Mode != Mode || snap.val().Dehum != dehum) {
+								console.log(snap.val().SP, SP, snap.val().Mode, Mode);
+								// Change Mode
+								if ([snap.val().Mode] == 4) {
+									console.log('went to vacation mode');
+									appliance.send(0xDF, [0x14,snap.val().Mode,99,50]);
+								} else {
+									console.log('went to regular modes'); 
+									appliance.send(0xDF, [0x14, snap.val().Mode]);
+									// Change SP
+									appliance.send(0xA5,[snap.val().SP]);
+									/*
+									// Change SH for dehum
+									if (snap.val().Dehum) {
+										appliance.send(0xEA,[15]);
+										dehum = snap.val().Dehum;
+										//console.log('changed to dehum mode');
 									} else {
-										console.log('went to regular modes'); 
-										appliance.send(0xDF, [0x14, snap.val().Mode]);
-										// Change SP
-										appliance.send(0xA5,[snap.val().SP]);
-										// Change SH for dehum
-										if (snap.val().Dehum) {
-											appliance.send(0xEA,[15]);
-											dehum = snap.val().Dehum;
-//											console.log('changed to dehum mode');
-										} else {
-											appliance.send(0xEA,[10]);
-											dehum = snap.val().Dehum;
-//											console.log('changed back to non-dehum mode');
-										}	
+										appliance.send(0xEA,[10]);
+										dehum = snap.val().Dehum;
+										//console.log('changed back to non-dehum mode');
 									}
-									// delete the executed schedule record
-									fireSchedule.child(snap.key()).remove();
-									console.log('changed SP to ',snap.val().SP,' changed mode to:',snap.val().Mode, 'dehum: ',snap.val().Dehum);
+									*/	
 								}
 							}
-						});
-												
-						// only write to the database every minute
-						dbWrite = dbWrite +1;
-						if (dbWrite == 12) {
-							// Write to firebase
-							fireHistory.push({
-								'TimeStamp': timeStamp,
-								'UE': UE,
-								'LE': LE,
-								'Comp': COMP,
-								'Fan': FAN,
-								'SP': SP,
-								'T2': T2,
-								'T3a': T3a,
-								'T3b': T3b,
-								'T4': T4,
-								'T5':T5,
-								'Amp': Amp,
-								'Volt': Volt,
-								'EEV': EEV,
-								'Flow': Flow,
-								'Mode': Mode
-							});
-							dbWrite = 0; // reset db write counter
-							console.log('writing to db');
+							// delete the executed schedule record
+							fireSchedule.child(snap.key()).remove();
+							console.log('changed SP to ',snap.val().SP,' changed mode to:',snap.val().Mode, 'dehum: ',snap.val().Dehum);
 						}
-				next();
-			});
-		},5000);
-	});
+					});
+												
+					// only write to the database every minute
+					dbWrite = dbWrite +1;
+					if (dbWrite == 12) {
+						// Write to firebase
+						fireHistory.push({
+							'TimeStamp': timeStamp,
+							'UE': UE,
+							'LE': LE,
+							'Comp': COMP,
+							'Fan': FAN,
+							'SP': SP,
+							'T2': T2,
+							'T3a': T3a,
+							'T3b': T3b,
+							'T4': T4,
+							'T5':T5,
+							'Amp': Amp,
+							'Volt': Volt,
+							'EEV': EEV,
+							'Flow': Flow,
+							'Mode': Mode
+						});
+						dbWrite = 0; // reset db write counter
+						console.log('writing to db');
+					}
+			next();
+		});
+	},5000);
+});
 });
 
 

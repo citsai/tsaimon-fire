@@ -10,6 +10,9 @@ $(document).ready(function() {
 	$('#btnNextWeek').on('click',function(){
 		nextWeek();
 	});
+	$('#btnCurrentWeek').on('click',function(){
+		currentWeek();
+	});	
 	// Get chart
 //	historicalChart();
 });
@@ -35,6 +38,19 @@ function nextWeek() {
 		inpWeek = moment().startOf('isoweek').valueOf();
 	} else {
 		inpWeek = (moment($('#inputStartWeek').val()).valueOf())+3600*24*7*1000;
+	}
+	$(function(){
+		$('#inputStartWeek').val(moment(inpWeek).format('YYYY-[W]WW'));
+	});
+	historicalChart(inpWeek);
+}
+
+function currentWeek() {
+	// check if valid date
+	if ($('#inputStartWeek').val() === "") {
+		inpWeek = moment().startOf('isoweek').valueOf();
+	} else {
+		inpWeek = (moment($('#inputStartWeek').val()).valueOf());
 	}
 	$(function(){
 		$('#inputStartWeek').val(moment(inpWeek).format('YYYY-[W]WW'));

@@ -9,7 +9,6 @@ block content
       input#inputStartWeek(type="week", name="startWeek")
       button#btnPrevWeek Prev
       button#btnNextWeek Next
-      button#btnCurrentWeek Submit
   #chart1
     div(
       style='width: 100%; height:300px;'
