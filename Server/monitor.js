@@ -16,7 +16,7 @@ var respawn = require('respawn');
 var util = require('util');
 //var logger = require('./source/utils/logger');
 
-var proc = respawn(['npm', 'start'], {
+var proc = respawn(['node', 'app.js'], {
   cwd: '.',
   maxRestarts: 5,
   sleep: 1000,

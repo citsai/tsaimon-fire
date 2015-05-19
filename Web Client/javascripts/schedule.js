@@ -193,10 +193,10 @@ function schedChart() {
 					min: 0,
 					max: 4,
 					opposite: true,
-					minTickInterval: 1,
+					minTickInterval: 1, 
 
-				}],
-
+				}],					
+						
 				tooltip:  {
 					crosshairs: true,
 					shared: true

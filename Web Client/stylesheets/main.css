@@ -3,6 +3,15 @@ body {
   font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
 }
 
+#nickName {
+    font-size: large;
+}
+
+#faults {
+    position: relative;
+    top: -300px;
+}
+
 #displayHeat {
 	position: relative;
 	left: 150px;
@@ -11,13 +20,13 @@ body {
 
 #tableSensor {
 	position: relative;
-	top: -170px;
-	left: 300px;
+	top: -180px;
+	left: 350px;
 }
 
 #chart1 {
 	position: relative;
-	top: -150px;
+	top: -250px;
 }
 
 a {

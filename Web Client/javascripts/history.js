@@ -12,7 +12,7 @@ $(document).ready(function() {
 	});
 	$('#btnCurrentWeek').on('click',function(){
 		currentWeek();
-	});	
+	});
 	// Get chart
 //	historicalChart();
 });
@@ -94,13 +94,13 @@ function historicalChart(inpWeek) {
 					cursor: 'pointer',
 					series: {
 						point: {
-							events: {
+							events: {							
 								click: function() {
 									dayChart(this.category,inpWeek);
 								}
 							}
 						}
-					}
+					}					
 				},
 				series: [{
 				}]
@@ -122,7 +122,7 @@ function historicalChart(inpWeek) {
 	var CompTot = 0;
 	var WHrsTot = 0;
 
-
+    
     // retrieving data for the Week
     fireHistory.orderByChild('TimeStamp').startAt(startTime).endAt(endTime).on("child_added", function(data) {
 		// compile data for each day of the week
@@ -141,7 +141,7 @@ function historicalChart(inpWeek) {
 
     // Delay for 5 seconds for firebase to retrieve the data
     setTimeout(function() {
-
+        
 	// compile total for the week and calculate Watt Hours
 	for (i=1; i<8; i++) {
 		stbyTot = stbyTot + stby[i];
@@ -188,13 +188,13 @@ function historicalChart(inpWeek) {
 					cursor: 'pointer',
 					series: {
 						point: {
-							events: {
+							events: {							
 								click: function() {
 									dayChart(this.category,inpWeek);
 								}
 							}
 						}
-					}
+					}					
 				},
 				series: [{
 					name: 'Standby',
@@ -229,7 +229,7 @@ function historicalChart(inpWeek) {
 			});
 	});
 
-    }, 5000);
+    }, 10000);
 }
 
 
@@ -320,7 +320,7 @@ function dayChart(dayStr,inpWeek) {
 					min: 0,
 					max: 4,
 					opposite: true
-				}],
+				}],							
 				tooltip:  {
 					crosshairs: true,
 					shared: true
@@ -369,7 +369,7 @@ function dayChart(dayStr,inpWeek) {
 
 // wait 5 seconds for Firebase to finish
     setTimeout(function(){
-
+        
 		//Chart it!
 		$(function () {
 			Highcharts.setOptions({
@@ -423,7 +423,7 @@ function dayChart(dayStr,inpWeek) {
 					min: 0,
 					max: 4,
 					opposite: true
-				}],
+				}],							
 				tooltip:  {
 					crosshairs: true,
 					shared: true

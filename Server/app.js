@@ -12,6 +12,7 @@ var fireAlerts = new firebase(firedbLink + '/alerts');
 var fireMailer = new firebase(firedbLink + '/mailer');
 var fireRecent = new firebase(firedbLink + '/recent');
 var fireCurrent = new firebase(firedbLink + '/current');
+var fireFaults = new firebase(firedbLink + '/current/faults');
 
 // initialize GE-SDK and required modules
 var gea = require("gea-sdk");
@@ -59,7 +60,7 @@ firedb.once('value',function(snap) {
 });
 
 // load the alert setup data on any changes
-var alertData;
+var alertData = '';
 fireAlerts.on('value', function(snap) {
 	alertData = snap.val();
 	console.log('fireAlerts data:',alertData);
@@ -71,14 +72,11 @@ var SPOld = "";
 var dateOld = moment().date();	
 var UEOld = "";
 var LEOld = "";
-var err1Old = 0;
-var err2Old = 0;
-var err3Old = 0;
-var err4Old = 0;
+var errOld = []; //System fault counter
 
 // configure the gea bus application
 var geapp = gea.configure({
-    address: 0xcb,
+    address: 0xcb
 });
 
 // bind to the adapter to access the bus
@@ -96,14 +94,150 @@ geapp.bind(adapter, function (bus) {
 				});
 			}
 		});
+		
 		//get Model Data
 		var model=4;
 		appliance.send([0x01],[],function(data) {
 			console.log("Software#: ",data[0]);
 			model = data[0];
 		});
+		// firebase - check if any fault counter changed
+		fireFaults.on('child_changed',function(newSnap,prevName) {
+			if(alertData.errFlg == 1) {
+				if (errOld[Number(newSnap.key())] < Number(newSnap.val())) {					
+					switch (Number(newSnap.key())) {
+						case 0:
+							fault = 'LE Failure (F9)';
+							break;
+						case 1:
+							faultName = 'UE Failure (F10)';
+							break;
+						case 2:
+							faultName = 'Compressor Failure (F3)';
+							break;
+						case 3:
+							faultName = 'T2 Failure(F2)';
+							break;
+						case 4:
+							faultName = 'T3a Failure (F5)';
+							break;
+						case 5:
+							faultName = 'T3b Failure (F6)';
+							break;
+						case 6:
+							faultName = 'T4 Failure (F7)';
+							break;
+						case 7:
+							faultName = 'T5 Failure (F8)';
+							break;
+						case 8:
+							faultName = 'Run Cond A Failure (FA)';
+							break;
+						case 9:
+							faultName = 'Run Cond B Failure (FB)';
+							break;
+						case 10:
+							faultName = 'Run Cond C Failure (FC)';
+							break;
+						case 11:
+							faultName = 'Run Cond D Failure (FD)';
+							break;
+						case 12:
+							faultName = 'Run Cond E Failure (FE)';
+							break;
+						case 13:
+							faultName = 'Run Cond F Failure (FF)';
+							break;
+						case 14:
+							faultName = 'Run Cond G Failure (FG)';
+							break;
+						case 15:
+							faultName = 'Run Cond H Failure (FH)';
+							break;
+						case 16:
+							faultName = 'Run Cond I Failure (FI)';
+							break;
+						case 17:
+							faultName = 'Run Cond J Failure (FJ)';
+							break;
+						case 18:
+							faultName = 'Run Cond L Failure (FL)';
+							break;
+						case 19:
+							faultName = 'Fan Failure (F4)';
+							break;
+						case 20:
+							faultName = 'Stuck Key (F13)';
+							break;
+						case 21:
+							faultName = 'Flash Failure (F15)';
+							break;
+						case 22:
+							faultName = 'Flash Write Fault (F15)';
+							break;
+						case 23:
+							faultName = 'Flash Busy Fault (F15)';
+							break;
+						case 24:
+							faultName = 'Uninitialized Flash Fault (F15)';
+							break;
+						case 25:
+							faultName = 'Flash Bad Read Fault (F15)';
+							break;
+						case 26:
+							faultName = 'Flash Static buffer Full (F15)';
+							break;
+						case 27:
+							faultName = 'Flash buffer violation (F15)';
+							break;
+						case 28:
+							faultName = 'Flash Record Count Config Error (F15)';
+							break;
+						case 29:
+							faultName = 'Anode Depleted (F16)';
+							break;
+						case 30:
+							faultName = 'Anode Miswire (F17)';
+							break;
+						case 31:
+							faultName = 'All 3 Element Failed Current Test (F18)';
+							break;
+						case 32:
+							faultName = 'Primary Heating source voltage fail (F19)';
+							break;
+						case 33:
+							faultName = 'Condensate Drain Pan Sensor (F20)';
+							break;
+						case 34:
+							faultName = 'UL Voltage Divider Fail (F23)';
+							break;
+						case 35:
+							faultName = 'Dirty Filter (F14)';
+							break;
+						case 36:
+							faultName = 'Dry Tank (F11)';
+							break;
+						case 37:
+							faultName = 'Line Miswire (F12)';
+							break;
+						case 38:
+							faultName = 'application Image CRC error (F21)';
+							break;
+						case 39:
+							faultName = 'Parametric Image CRC Failure (F22)';
+							break;
+						default:
+							faultName = "";
+							break;
+					}
 
-
+					alertMsg = 'Fault:' + faultName + ' Count: ' + newSnap.val();
+					alertSend(alertMsg);
+					console.log(alertMsg);
+				}
+				errOld[Number(newSnap.key())] = Number(newSnap.val());
+			}
+		});
 // The big loop...
 		setInterval(function(){
 //**** alternate method using sequential blocking *******
@@ -111,7 +245,7 @@ geapp.bind(adapter, function (bus) {
 
 			// check memory usage for leakages and exit if over.... uncomment this if you are going to use a production manager
 			usage = process.memoryUsage();
-			if (usage.rss > 120000000) {
+			if (usage.rss > 150000000) {
 				console.log(usage);
 				process.abort();
 			}
@@ -124,8 +258,13 @@ geapp.bind(adapter, function (bus) {
 				});
 			}).par(function(next){
 				// Get additional for mode
-				appliance.send([0xDE],[0x10],function(data2) {
+				appliance.read(0x4020,function(data2) {
 					next(null,data2);
+				});
+			}).par(function(next){
+				// Get fault counts
+				appliance.read(0x4057,function(data3) {
+					next(null,data3);
 				});
 			}).seq(function(next,err,res){
 			// write Hyperterminal data to databases
@@ -144,10 +283,12 @@ geapp.bind(adapter, function (bus) {
 					Volt = res[0][16]*256 + res[0][17];
 					EEV = res[0][18]*256 + res[0][19];
 					Flow = res[0][20];			
-//					Mode = res[0][21];  //Deleted due to different modes being used in the new Geospring...	
-					Mode = res[1][8];
+//					Mode = res[1][8]; // this is for 0xDE 0x10 command
+					Mode = res[1][0];
+					if (model < 2) {
+						Mode = Mode - 1;  // Off set for old G2 models.
+					}
 					if (model < 4) {
-						Mode = Mode - 1;  // Off set for G2 models.
 						FAN = COMP;	// no independent FAN relay for G2 models.
 					}
 					console.log(timeStamp,UE,LE,COMP,FAN,SP,T2,T3a,T3b,T4,T5,Amp,Volt,EEV,Flow,Mode,dehum);
@@ -155,7 +296,7 @@ geapp.bind(adapter, function (bus) {
 					// Update Firebase recent data
 					fireRecent.push({'TimeStamp':timeStamp,'UE':UE,'LE':LE,'Comp':COMP,'Fan':FAN,'SP':SP,'T2':T2,'T3a':T3a,'T3b':T3b,'T4':T4,'T5':T5,'Amp':Amp,'Volt':Volt,'EEV':EEV,'Flow':Flow,'Mode':Mode,'Dehum':dehum});
 					// Update Firebase current data
-					fireCurrent.set({'TimeStamp':timeStamp,'UE':UE,'LE':LE,'Comp':COMP,'Fan':FAN,'SP':SP,'T2':T2,'T3a':T3a,'T3b':T3b,'T4':T4,'T5':T5,'Amp':Amp,'Volt':Volt,'EEV':EEV,'Flow':Flow,'Mode':Mode,'Dehum':dehum});
+					fireCurrent.set({'TimeStamp':timeStamp,'UE':UE,'LE':LE,'Comp':COMP,'Fan':FAN,'SP':SP,'T2':T2,'T3a':T3a,'T3b':T3b,'T4':T4,'T5':T5,'Amp':Amp,'Volt':Volt,'EEV':EEV,'Flow':Flow,'Mode':Mode,'Dehum':dehum,'faults':res[2]});
 						
 					// check for initial startup for alerts
 					if (SPOld === "") {
@@ -163,8 +304,11 @@ geapp.bind(adapter, function (bus) {
 						ModeOld = Mode;
 						UEOld = UE;
 						LEOld = LE;
+						errOld = res[2];
 					}
-					alertChk(SP,Mode,UE,LE,appliance);
+					if (alertData !== '') {
+						alertChk(SP,Mode,UE,LE,appliance);
+					}
 					// Check to see if need to change SP/Modes
 					// Check firebase Schedule
 					fireSchedule.orderByChild('Time').endAt(timeStamp).limitToFirst(1).once('child_added', function(snap) {
@@ -282,42 +426,6 @@ function alertChk(SP,Mode,UE,LE,appliance) {
 			alertSend(alertMsg);
 			console.log(alertMsg);
 		}
-	}
-	if (alertData.errFlg ==1) {
-		appliance.send([0xDE],[0x14],function(fault) {
-			if (err1Old != fault[1]) {
-				err1Old = fault[1];
-				if (fault[1] !== 0) {
-					alertMsg = 'There is a new fault on byte1: ' + fault[1];
-					alertSend(alertMsg);
-					console.log(alertMsg);
-				}
-			}
-			if (err2Old != fault[2]) {
-				err2Old = fault[2];
-				if (fault[2] !== 0) {
-					alertMsg = 'There is a new fault on byte2: ' + fault[2];
-					alertSend(alertMsg);
-					console.log(alertMsg);
-				}
-			}
-			if (err3Old != fault[3]) {
-				err3Old = fault[3];
-				if (fault[3] !== 0) {
-					alertMsg = 'There is a new fault on byte3: ' + fault[3];
-					alertSend(alertMsg);
-					console.log(alertMsg);
-				}
-			}
-			if (err4Old != fault[4]) {
-				err4Old = fault[4];
-				if (fault[4] !== 0) {
-					alertMsg = 'There is a new fault on byte4: ' + fault[4];
-					alertSend(alertMsg);
-					console.log(alertMsg);
-				}
-			}
-		});
 	}
 
 	if (alertData.dayKwhrFlg == 1 || alertData.dayStbyFlg == 1) {
